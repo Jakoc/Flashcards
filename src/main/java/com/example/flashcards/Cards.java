@@ -1,7 +1,7 @@
 package com.example.flashcards;
 
 public class Cards {
-    private int cardId;
+    private String cardId;
     private String category;
     private String question;
     private String imageName;
@@ -10,7 +10,7 @@ public class Cards {
     private int year;
     private String timePeriod;
 
-    public Cards(int cardId, String category, String question, String imageName, String answer, String title, int year, String timePeriod) {
+    public Cards(String cardId, String category, String question, String imageName, String answer, String title, int year, String timePeriod) {
         this.cardId = cardId;
         this.category = category;
         this.question = question;
@@ -21,11 +21,11 @@ public class Cards {
         this.timePeriod = timePeriod;
     }
 
-    public int getCardId() {
+    public String getCardId() {
         return cardId;
     }
 
-    public void setCardId(int cardId) {
+    public void setCardId(String cardId) {
         this.cardId = cardId;
     }
 

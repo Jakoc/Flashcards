@@ -9,8 +9,8 @@
 
 <AnchorPane prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.flashcards.FlashCardController">
    <children>
-      <ImageView fx:id="flashcardImage" fitHeight="336.0" fitWidth="500.0" layoutX="50.0" layoutY="122.0" pickOnBounds="true" preserveRatio="true" />
-      <Label fx:id="questionLabel" layoutX="244.0" layoutY="76.0" text="Spørgsmål">
+      <ImageView fx:id="flashcardImage" fitHeight="336.0" fitWidth="500.0" layoutX="100.0" layoutY="122.0" pickOnBounds="true" preserveRatio="true" />
+      <Label fx:id="questionLabel" layoutX="160.0" layoutY="76.0" text="Spørgsmål">
          <font>
             <Font size="24.0" />
          </font>
@@ -22,8 +22,9 @@
       <Label fx:id="almostCorrectLabel" layoutX="250.0" layoutY="52.0" text="ANK" />
       <Label fx:id="partlyCorrectLabel" layoutX="306.0" layoutY="52.0" text="ADK" />
       <Label fx:id="notCorrectLabel" layoutX="363.0" layoutY="52.0" text="AIK" />
-      <Label fx:id="answerLabel" layoutX="264.0" layoutY="470.0" text="" />
-      <HBox fx:id="svarVBox" alignment="CENTER" layoutX="50.0" layoutY="454.0" prefHeight="146.0" prefWidth="500.0" visible="false">
+      <Label fx:id="answerLabel" layoutX="264.0" layoutY="470.0" text="" visible="false" />
+      <Label fx:id="infoLabel" layoutX="264.0" layoutY="500.0" text="" visible="false" />
+      <HBox fx:id="svarVBox" alignment="CENTER" layoutX="50.0" layoutY="500.0" prefHeight="146.0" prefWidth="500.0" visible="false">
          <Button fx:id="correctButton" text="Korrekt" />
          <Button fx:id="almostCorrectButton" text="Næsten korrekt" />
          <Button fx:id="partlyCorrectButton" text="Delvist korrekt" />
