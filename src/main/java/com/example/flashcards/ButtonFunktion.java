@@ -33,6 +33,7 @@ public class ButtonFunktion {
         scheduleReview(1, TimeUnit.MINUTES); // 1 min
         System.out.println("Ikke korrekt knap blev trykket");
         cardChangeListener.onNextCard();
+
     }
 
 
