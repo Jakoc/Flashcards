@@ -23,7 +23,7 @@ public class FlashCardController implements CardChangeListener {
 
     private ButtonFunktion buttonFunctions = new ButtonFunktion(this);
     private DAO dao;
-    private List<Cards> allCards;
+    private List<Cards> allCards = new ArrayList<>();
     private Random random = new Random();
     @FXML
     private HBox svarVBox, svarKnap;
@@ -41,7 +41,8 @@ public class FlashCardController implements CardChangeListener {
     public void initialize() {
         dao = new DAO();
         try {
-            allCards = dao.getAllCards(); // Hent alle kort fra databasen
+            List<Cards> allCards = dao.getAllCards(); // Hent alle kort fra databasen
+            importAndInsertCardsFromFile();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -73,6 +74,50 @@ public class FlashCardController implements CardChangeListener {
         }
     }
 
+    public void importAndInsertCardsFromFile() {
+        try {
+            List<Cards> importedCards = dao.importCardsfromList("C:\\Users\\damer\\Downloads\\Great Works of Art__Artists.txt");
+
+            if (importedCards != null && !importedCards.isEmpty()) {
+                dao.insertCards(importedCards); // Indsæt kortene i databasen via DAO
+            } else {
+                System.out.println("Ingen kort blev importeret fra filen.");
+            }
+        } catch (RuntimeException ex) {
+            ex.printStackTrace(); // Udskriv eventuelle undtagelser, der kan opstå
+        }
+    }
+
+    private void updateUI(List<Cards> newCards) {
+        if (newCards != null && !newCards.isEmpty()) {
+            currentCardIndex = 0; // Nulstil indeks til det første kort
+            showCardAtIndex(currentCardIndex);
+        } else {
+            System.out.println("Ingen kort at vise i brugergrænsefladen.");
+        }
+    }
+
+    private void showCardAtIndex(int index) {
+        if (!allCards.isEmpty() && index >= 0 && index < allCards.size()){
+            Cards nextCard = allCards.get(index);
+
+
+        questionLabel.setText(nextCard.getQuestion());
+        answerLabel.setText(nextCard.getAnswer());
+
+        String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + nextCard.getImageName();
+        Image image = new Image(imagePath);
+        flashcardImage.setImage(image);
+
+        String infoText = "" + nextCard.getTitle() + "\n" +
+                "" + nextCard.getYear() + " - " + nextCard.getTimePeriod();
+
+        infoLabel.setText(infoText);
+        saveState();
+        }else {
+            System.out.println("ingen kort");
+        }
+    }
 
     public void answerButtonPressed(ActionEvent event) {
         //gør knappen usynlig
@@ -105,29 +150,6 @@ public class FlashCardController implements CardChangeListener {
 
 
     }
-
-    @FXML
-    public void showRandomFlashCard() {
-        if (allCards != null && !allCards.isEmpty()) {
-            currentCardIndex = (currentCardIndex + 1) % allCards.size();
-            Cards nextCard = allCards.get(currentCardIndex);
-
-            questionLabel.setText(nextCard.getQuestion());
-            answerLabel.setText(nextCard.getAnswer());
-
-            // sti til billederen + tager et tilfældigt kort
-            String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + nextCard.getImageName();
-            Image image = new Image(imagePath);
-            flashcardImage.setImage(image);
-
-            //info omkring kortet
-            String infoText = "" + nextCard.getTitle() + "\n" +
-                    "" + nextCard.getYear() + " - " + nextCard.getTimePeriod();
-
-            infoLabel.setText(infoText);
-            saveState();
-        }
-    }
     @FXML
     public void onNextCard(){
 
@@ -138,7 +160,7 @@ public class FlashCardController implements CardChangeListener {
             infoLabel.setVisible(false);
             showAnswerButton.setVisible(true);
 
-            showRandomFlashCard();
+            showCardAtIndex(currentCardIndex);
 
         });
     }
