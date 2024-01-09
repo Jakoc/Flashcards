@@ -21,7 +21,7 @@ import java.util.*;
 
 public class FlashCardController implements CardChangeListener {
 
-    private ButtonFunktion buttonFunctions = new ButtonFunktion(this);
+    private ButtonFunktion buttonFunctions = new ButtonFunktion(this, this);
     private DAO dao;
     private List<Cards> allCards = new ArrayList<>();
     private Random random = new Random();
@@ -33,41 +33,33 @@ public class FlashCardController implements CardChangeListener {
     @FXML
     private Label answerLabel, questionLabel, infoLabel;
     @FXML
+    private Label allCardsLabel, cardsLeftLabel, correctCardsLabel, almostCorrectLabel, partlyCorrectLabel, notCorrectLabel;
+    @FXML
     private ImageView flashcardImage;
     private int currentCardIndex;
     private final String stateFilePath = "state.properties";
+    private int correctCount;
+    private int almostCorrectCount;
+    private int partlyCorrectCount;
+    private int notCorrectCount;
 
 
     public void initialize() {
         dao = new DAO();
         try {
-            List<Cards> allCards = dao.getAllCards(); // Hent alle kort fra databasen
+            allCards = dao.getAllCards(); // Hent alle kort fra databasen
             importAndInsertCardsFromFile();
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
-        loadState(); // Indlæs den gemte tilstand
-
+        loadState(); // Indlæs den gemte tilstand. Fjern og kør programmet 2 gange for at reset
+        updateLabel();
         if (allCards != null && !allCards.isEmpty()) {
             if (currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
-                // Vis det kort, der blev gemt sidst
-                Cards savedCard = allCards.get(currentCardIndex);
-                questionLabel.setText(savedCard.getQuestion());
-                answerLabel.setText(savedCard.getAnswer());
-
-                // Sti til billedet for det gemte kort
-                String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + savedCard.getImageName();
-                Image image = new Image(imagePath);
-                flashcardImage.setImage(image);
-
-                // Info om det gemte kort
-                String infoText = "" + savedCard.getTitle() + "\n" +
-                        "" + savedCard.getYear() + " - " + savedCard.getTimePeriod();
-
-                infoLabel.setText(infoText);
+                showCardAtIndex(currentCardIndex); // Vis det kort, der var vist sidst
             } else {
-                System.out.println("Invalid saved card index.");
+                System.out.println("Ugyldigt kortindeks.");
             }
         } else {
             System.out.println("Ingen kort fundet i databasen.");
@@ -98,24 +90,24 @@ public class FlashCardController implements CardChangeListener {
     }
 
     private void showCardAtIndex(int index) {
-        if (!allCards.isEmpty() && index >= 0 && index < allCards.size()){
+        if (!allCards.isEmpty() && index >= 0 && index < allCards.size()) {
             Cards nextCard = allCards.get(index);
 
+            questionLabel.setText(nextCard.getQuestion());
+            answerLabel.setText(nextCard.getAnswer());
 
-        questionLabel.setText(nextCard.getQuestion());
-        answerLabel.setText(nextCard.getAnswer());
+            String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + nextCard.getImageName();
+            Image image = new Image(imagePath);
+            flashcardImage.setImage(image);
 
-        String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + nextCard.getImageName();
-        Image image = new Image(imagePath);
-        flashcardImage.setImage(image);
+            String infoText = "" + nextCard.getTitle() + "\n" +
+                    "" + nextCard.getYear() + " - " + nextCard.getTimePeriod();
 
-        String infoText = "" + nextCard.getTitle() + "\n" +
-                "" + nextCard.getYear() + " - " + nextCard.getTimePeriod();
-
-        infoLabel.setText(infoText);
-        saveState();
-        }else {
-            System.out.println("ingen kort");
+            infoLabel.setText(infoText);
+            currentCardIndex = index;
+            saveState();
+        } else {
+            System.out.println("Ingen kort");
         }
     }
 
@@ -134,6 +126,7 @@ public class FlashCardController implements CardChangeListener {
         Button correctButton = new Button("Korrekt");
         correctButton.setOnAction(e -> buttonFunctions.correctButtonPressed());
 
+
         Button almostCorrectButton = new Button("Næsten korrekt");
         almostCorrectButton.setOnAction(e -> buttonFunctions.almostCorrectButtonPressed());
 
@@ -150,6 +143,15 @@ public class FlashCardController implements CardChangeListener {
 
 
     }
+
+    private void showRandomCard() {
+        if (!allCards.isEmpty()) {
+            int randomIndex = new Random().nextInt(allCards.size());
+            showCardAtIndex(randomIndex);
+        } else {
+            System.out.println("Ingen kort tilgængelige.");
+        }
+    }
     @FXML
     public void onNextCard(){
 
@@ -160,35 +162,75 @@ public class FlashCardController implements CardChangeListener {
             infoLabel.setVisible(false);
             showAnswerButton.setVisible(true);
 
-            showCardAtIndex(currentCardIndex);
+            if (currentCardIndex < allCards.size() - 1) { // Kontroller om der er flere kort tilbage
+                currentCardIndex++; // Gå til næste kort
+                showCardAtIndex(currentCardIndex); // Vis det næste kort
+            } else {
+                System.out.println("Ingen flere kort tilbage."); // Hvis der ikke er flere kort tilbage
+            }
 
         });
     }
 
     private void saveState() {
-
         Properties properties = new Properties();
         properties.setProperty("currentCardIndex", String.valueOf(currentCardIndex));
-        try (OutputStream output = new FileOutputStream(stateFilePath)){
+        properties.setProperty("correctCount", String.valueOf(correctCount));
+        properties.setProperty("almostCorrectCount", String.valueOf(almostCorrectCount));
+        properties.setProperty("partlyCorrectCount", String.valueOf(partlyCorrectCount));
+        properties.setProperty("notCorrectCount", String.valueOf(notCorrectCount));
+
+        try (OutputStream output = new FileOutputStream(stateFilePath)) {
             properties.store(output, "Flashcard State");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("gemmer app");
+        System.out.println("Gemmer app");
     }
     private void loadState(){
-
         Properties properties = new Properties();
 
         try (InputStream input = new FileInputStream(stateFilePath)) {
             properties.load(input);
             String index = properties.getProperty("currentCardIndex");
-            if(index != null) {
+            if (index != null) {
                 currentCardIndex = Integer.parseInt(index);
             }
+
+            correctCount = Integer.parseInt(properties.getProperty("correctCount", "0"));
+            almostCorrectCount = Integer.parseInt(properties.getProperty("almostCorrectCount", "0"));
+            partlyCorrectCount = Integer.parseInt(properties.getProperty("partlyCorrectCount", "0"));
+            notCorrectCount = Integer.parseInt(properties.getProperty("notCorrectCount", "0"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("loader app");
+        System.out.println("Indlæser app");
+    }
+    public void incrementCorrectCount() {
+        correctCount++;
+        updateLabel();
+    }
+
+    public void incrementAlmostCorrectCount() {
+        almostCorrectCount++;
+        updateLabel();
+    }
+
+    public void incrementPartlyCorrectCount() {
+        partlyCorrectCount++;
+        updateLabel();
+    }
+
+    public void incrementNotCorrectCount() {
+        notCorrectCount++;
+        updateLabel();
+    }
+    private void updateLabel(){
+        allCardsLabel.setText("Fulde antal af kort: " + allCards.size());
+        cardsLeftLabel.setText("Manglende kort: " + (allCards.size() - (correctCount + almostCorrectCount + partlyCorrectCount + notCorrectCount)));
+        correctCardsLabel.setText("Korrekte antal kort: " + correctCount);
+        almostCorrectLabel.setText("Næsten korrekte antal kort: " + almostCorrectCount);
+        partlyCorrectLabel.setText("Delvist ikke korrekte kort: " + partlyCorrectCount);
+        notCorrectLabel.setText("Ikke korrekte kort: " + notCorrectCount);
     }
 }

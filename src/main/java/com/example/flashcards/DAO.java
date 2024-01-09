@@ -34,15 +34,17 @@ public class DAO {
                 String question = rs.getString("question");
                 String imageName = rs.getString("image_name");
                 String answer = rs.getString("answer");
-                String title = rs.getString("titel");
+                String titel = rs.getString("titel");
                 int year = rs.getInt("year");
                 String timePeriod = rs.getString("timeperiod");
 
 
 
-                Cards card = new Cards(cardId, category, question, imageName, answer, title, year, timePeriod);
+                Cards card = new Cards(cardId, category, question, imageName, answer, titel, year, timePeriod);
                 cards.add(card);
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return cards;
     }
@@ -54,13 +56,13 @@ public class DAO {
         try (BufferedReader buf = new BufferedReader(new FileReader(filePath))) {
             String lineJustFetched = null;
             while ((lineJustFetched = buf.readLine()) != null) {
-                String[] wordsArray = lineJustFetched.split("\t");
+                String[] wordsArray = lineJustFetched.split(",", -1);
 
-                if (wordsArray.length >= 8) {
+                if (wordsArray.length >= 20) {
                     String cardID = wordsArray[0];
                     String category = wordsArray[1];
                     String imageName = wordsArray[3];
-                    imageName = imageName.substring(imageName.indexOf("\"") + 1, imageName.lastIndexOf("\""));
+                    imageName = imageName.replaceAll("^\"|\"$", "");
                     String answer = wordsArray[4];
                     String titel = wordsArray[5];
                     String timePeriod = wordsArray[8];
