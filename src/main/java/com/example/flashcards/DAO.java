@@ -122,4 +122,22 @@ public class DAO {
             System.out.println("dubleret kort kommer ikke med");
         }
     }
+
+
+
+    // tør ikke at slette denne her
+    public void deleteCard(String cardId) {
+        try {
+            String query = "DELETE FROM card WHERE card_id IN (SELECT card_id FROM irrelevant_cards)";
+            PreparedStatement pstmt = con.prepareStatement(query);
+            pstmt.executeUpdate();
+
+
+            query = "DELETE FROM irrelevant_cards";
+            pstmt = con.prepareStatement(query);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

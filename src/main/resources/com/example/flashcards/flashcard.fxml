@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="appPane" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.flashcards.FlashCardController">
+<AnchorPane fx:id="appPane" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.flashcards.FlashCardController">
    <children>
       <ImageView fx:id="flashcardImage" fitHeight="336.0" fitWidth="358.0" layoutX="228.0" layoutY="112.0" pickOnBounds="true" preserveRatio="true" />
       <Label fx:id="questionLabel" layoutX="350.0" layoutY="77.0" text="Spørgsmål">
@@ -30,5 +32,7 @@
          <Button fx:id="partlyCorrectButton" text="Delvist korrekt" />
          <Button fx:id="notCorrectButton" text="Ikke korrekt" />
       </HBox>
+      <Button fx:id="irrelevantButton" layoutX="350.0" layoutY="14.0" mnemonicParsing="false" onAction="#IrrelevantButtonPressed" text="Irrelevant" />
+      <Button fx:id="addCardButton" layoutX="417.0" layoutY="14.0" mnemonicParsing="false" onAction="#addCardButtonPressed" text="Tilføj Kort" />
    </children>
 </AnchorPane>
