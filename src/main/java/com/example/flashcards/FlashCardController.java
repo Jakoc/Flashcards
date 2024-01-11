@@ -29,7 +29,7 @@ public class FlashCardController implements CardChangeListener {
     private HBox svarVBox, svarKnap;
 
     @FXML
-    private Button showAnswerButton, irrelevantButton, addCardButton;
+    private Button showAnswerButton, irrelevantButton, addCardButton, finishButton;
     @FXML
     private Label answerLabel, questionLabel, infoLabel;
     @FXML
@@ -168,10 +168,46 @@ public class FlashCardController implements CardChangeListener {
                 currentCardIndex++; // Gå til næste kort
                 showCardAtIndex(currentCardIndex); // Vis det næste kort
             } else {
+                setIsComplete();
                 System.out.println("Ingen flere kort tilbage."); // Hvis der ikke er flere kort tilbage
             }
 
         });
+    }
+    private void setIsComplete(){
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Færdig!");
+        alert.setHeaderText(null);
+        alert.setContentText("Du er færdig med sættet. Nu må du se fjernsyn");
+        alert.showAndWait();
+    }
+
+    public void RestartButtonPressed(ActionEvent event) {
+        userWantsToRestart();
+        currentCardIndex = 0;
+        correctCount = 0;
+        almostCorrectCount = 0;
+        partlyCorrectCount = 0;
+        notCorrectCount = 0;
+        updateLabel();
+        if (!allCards.isEmpty()) {
+            showCardAtIndex(currentCardIndex);
+        } else {
+            System.out.println("Ingen kort fundet");
+        }
+    }
+
+    private boolean userWantsToRestart(){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Afslut eller genstart");
+        alert.setHeaderText(null);
+        alert.setContentText("Er du sikker på at du vil genstarte?");
+        Optional<ButtonType> result = alert.showAndWait();
+        return result.isPresent() && result.get() == ButtonType.OK;
+    }
+    public void finishButtonPressed(ActionEvent event) {
+        System.out.println("Hold da op du er hurtig færdig");
+        setIsComplete();
     }
 
     private void saveState() {

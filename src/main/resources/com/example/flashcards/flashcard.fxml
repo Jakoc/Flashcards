@@ -34,5 +34,7 @@
       </HBox>
       <Button fx:id="irrelevantButton" layoutX="350.0" layoutY="14.0" mnemonicParsing="false" onAction="#IrrelevantButtonPressed" text="Irrelevant" />
       <Button fx:id="addCardButton" layoutX="417.0" layoutY="14.0" mnemonicParsing="false" onAction="#addCardButtonPressed" text="Tilføj Kort" />
+      <Button fx:id="restartButton" layoutX="300.0" layoutY="14.0" mnemonicParsing="false" onAction="#RestartButtonPressed" text="Restart" />
+      <Button fx:id="finishButton" layoutX="231.0" layoutY="14.0" mnemonicParsing="false" onAction="#finishButtonPressed" text="Afslut sæt" />
    </children>
 </AnchorPane>
