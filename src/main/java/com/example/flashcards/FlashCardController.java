@@ -37,6 +37,7 @@ public class FlashCardController implements CardChangeListener {
     @FXML
     private ImageView flashcardImage;
     private int currentCardIndex;
+    boolean showCurrentCard = false;
     private final String stateFilePath = "state.properties";
     private int correctCount;
     private int almostCorrectCount;
@@ -55,7 +56,7 @@ public class FlashCardController implements CardChangeListener {
             e.printStackTrace();
         }
 
-        loadState(); // Indlæs den gemte tilstand. Fjern og kør programmet 2 gange for at reset
+        loadState();
         updateLabel();
         if (allCards != null && !allCards.isEmpty()) {
             if (currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
@@ -66,6 +67,12 @@ public class FlashCardController implements CardChangeListener {
         } else {
             System.out.println("Ingen kort fundet i databasen.");
         }
+    }
+    public Cards getCurrentCard() {
+        if (!allCards.isEmpty() && currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
+            return allCards.get(currentCardIndex);
+        }
+        return null;
     }
 
     public void importAndInsertCardsFromFile() {
@@ -81,17 +88,20 @@ public class FlashCardController implements CardChangeListener {
             ex.printStackTrace(); // Udskriv eventuelle undtagelser, der kan opstå
         }
     }
-
-    private void updateUI(List<Cards> newCards) {
-        if (newCards != null && !newCards.isEmpty()) {
-            currentCardIndex = 0; // Nulstil indeks til det første kort
-            showCardAtIndex(currentCardIndex);
+    public void showDelayedCard(int index){
+        if (shouldShowCurrentCard()){
+            showCardAtIndex(index);
         } else {
-            System.out.println("Ingen kort at vise i brugergrænsefladen.");
+            onNextCard();
         }
+        showCurrentCard = false;
     }
 
-    private void showCardAtIndex(int index) {
+    private boolean shouldShowCurrentCard(){
+        return showCurrentCard;
+    }
+
+    public void showCardAtIndex(int index) {
         if (!allCards.isEmpty() && index >= 0 && index < allCards.size()) {
             Cards nextCard = allCards.get(index);
 
@@ -111,6 +121,9 @@ public class FlashCardController implements CardChangeListener {
         } else {
             System.out.println("Ingen kort");
         }
+    }
+    public int getCurrentCardIndex(){
+        return currentCardIndex;
     }
 
     public void answerButtonPressed(ActionEvent event) {
@@ -146,7 +159,7 @@ public class FlashCardController implements CardChangeListener {
 
     }
 
-    private void showRandomCard() {
+    public void showRandomCard() {
         if (!allCards.isEmpty()) {
             int randomIndex = new Random().nextInt(allCards.size());
             showCardAtIndex(randomIndex);
@@ -166,12 +179,13 @@ public class FlashCardController implements CardChangeListener {
 
             if (currentCardIndex < allCards.size() - 1) { // Kontroller om der er flere kort tilbage
                 currentCardIndex++; // Gå til næste kort
-                showCardAtIndex(currentCardIndex); // Vis det næste kort
+                //showCardAtIndex(currentCardIndex); // Vis det næste kort
             } else {
                 setIsComplete();
                 System.out.println("Ingen flere kort tilbage."); // Hvis der ikke er flere kort tilbage
             }
-
+            showCardAtIndex(currentCardIndex);
+            saveState();
         });
     }
     private void setIsComplete(){
@@ -263,7 +277,13 @@ public class FlashCardController implements CardChangeListener {
         notCorrectCount++;
         updateLabel();
     }
-    private void updateLabel(){
+
+    public void decrementNotCorrectCount(){
+        notCorrectCount--;
+        updateLabel();
+    }
+
+    public void updateLabel(){
         allCardsLabel.setText("Fulde antal af kort: " + allCards.size());
         cardsLeftLabel.setText("Manglende kort: " + (allCards.size() - (correctCount + almostCorrectCount + partlyCorrectCount + notCorrectCount)));
         correctCardsLabel.setText("Korrekte antal kort: " + correctCount);
