@@ -6,20 +6,26 @@ public class Cards {
     private String question;
     private String imageName;
     private String answer;
-    private String title;
+    private String titel;
     private int year;
     private String timePeriod;
+    private boolean markedCorrect;
+    private int repetition;
+    private int interval;
+    private int index;
 
-    public Cards(String cardId, String category, String question, String imageName, String answer, String title, int year, String timePeriod) {
+    public Cards(String cardId, String category, String question, String imageName, String answer, String titel, int year, String timePeriod) {
         this.cardId = cardId;
         this.category = category;
         this.question = question;
         this.imageName = imageName;
         this.answer = answer;
-        this.title = title;
+        this.titel = titel;
         this.year = year;
         this.timePeriod = timePeriod;
+        this.markedCorrect = false;
     }
+
 
     public String getCardId() {
         return cardId;
@@ -62,11 +68,11 @@ public class Cards {
     }
 
     public String getTitle() {
-        return title;
+        return titel;
     }
 
     public void setTitle(String title) {
-        this.title = title;
+        this.titel = title;
     }
 
     public int getYear() {
@@ -83,6 +89,31 @@ public class Cards {
 
     public void setTimePeriod(String timePeriod) {
         this.timePeriod = timePeriod;
+    }
+
+    public int getRepetition() {
+        return repetition;
+    }
+    public void setRepetition(int repetition) {
+        this.repetition = repetition;
+    }
+    public int getInterval() {
+        return interval;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
+    }
+    public boolean isMarkedCorrect() {
+        return markedCorrect;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }
 

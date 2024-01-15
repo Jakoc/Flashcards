@@ -1,0 +1,45 @@
+#appPane {
+    -fx-background-color: #ffffff;
+}
+.light-mode-label {
+    -fx-text-fill: black; /* Ændret til sort tekstfarve for light mode */
+}
+
+.light-mode-toggle-button {
+    -fx-background-color: gold; /* Ændret til en lys baggrundsfarve for light mode */
+    -fx-text-fill: #ffffff; /* Ændret til sort tekstfarve for light mode */
+    -fx-font-size: 14px; /* Skriftstørrelse, kan tilpasses */
+    -fx-font-weight: bold; /* Fed skrift, kan tilpasses */
+    -fx-padding: 5 10 5 10; /* Indvendig polstring, kan tilpasses */
+    -fx-background-radius: 5; /* Afrundede hjørner, kan tilpasses */
+}
+
+.light-mode-toggle-button:selected {
+    -fx-background-color: #d0d0d0; /* Ændret til en lidt mørkere farve for valgt tilstand i light mode */
+}
+
+.light-mode-button {
+    -fx-background-color: gold; /* Ændr baggrundsfarven til guld */
+    -fx-text-fill: #ffffff; /* Tekstfarve, kan tilpasses */
+    -fx-font-size: 14px; /* Skriftstørrelse, kan tilpasses */
+    -fx-font-weight: bold; /* Fed skrift, kan tilpasses */
+    -fx-padding: 5 10 5 10; /* Indvendig polstring, kan tilpasses */
+    -fx-background-radius: 5; /* Afrundede hjørner, kan tilpasses */
+}
+
+.light-mode-button:hover {
+    -fx-background-color: #ffd700; /* Ændr baggrundsfarven ved hover til en lysere gul */
+}
+
+.light-mode-button:pressed {
+    -fx-background-color: #ffa500; /* Ændr baggrundsfarven ved tryk til en mørkere gul */
+}
+
+.light-mode-hbox {
+    -fx-spacing: 10; /* Afstand mellem knapperne, kan tilpasses */
+}
+
+.light-mode-hbox .light-mode-button {
+    -fx-min-width: 100; /* Minimumsbredde for knapperne, kan tilpasses */
+    -fx-max-width: 100; /* Maksimal bredde for knapperne, kan tilpasses */
+}

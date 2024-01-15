@@ -7,84 +7,72 @@ import javafx.application.Platform;
 import javafx.util.Duration;
 
 import java.sql.Time;
-import java.util.Random;
-import java.util.Scanner;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
 public class ButtonFunktion {
-    private CardChangeListener cardChangeListener;
     private FlashCardController controller;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private FlashCardScheduler cardScheduler;
+    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private Cards lastIncorrectCard;
     private int lastIncorrectIndex;
+    private Queue<Integer> cardQueue = new LinkedList<>();
 
-
-    public ButtonFunktion(CardChangeListener listener, FlashCardController controller) {
-        this.cardChangeListener = listener;
+    public ButtonFunktion(CardChangeListener listener,FlashCardController controller) {
         this.controller = controller;
+        this.cardScheduler = new FlashCardScheduler(controller);
+        controller.setCardScheduler(cardScheduler);
+    }
+    public void skipToNextCard() {
+        int currentCardIndex = controller.getCurrentCardIndex();
+        cardQueue.offer(currentCardIndex);
+        controller.onNextCard();
+        cardScheduler.cancelScheduledTask(currentCardIndex);
+        controller.userManuallySwitching = true;
+        controller.resetElapsedTime();
+        controller.updateTimerLabel();
     }
 
-    public void correctButtonPressed() {
-        //scheduleReview(4 * 24 * 60); //4 Dage
-        System.out.println("korrekt knap blev trykket: Kortet visses tidligst om 4 dage igen");
 
+    public void correctButtonPressed() {
+        System.out.println("Korrekt knap blev trykket: Kortet vises tidligst om 4 dage igen");
         controller.incrementCorrectCount();
-        cardChangeListener.onNextCard();
-        // når 4 dage er gået skal kortet vises igen og incrementCorrectCount skal falde med 1
+        cardScheduler.scheduleNextCard(4, controller.getCurrentCardIndex());
     }
 
     public void almostCorrectButtonPressed() {
-        //scheduleReview(10); // 10 min
-        System.out.println("Næsten korrekt knap blev trykket: Kortet visses tidligst om 10 min igen");
-
+        System.out.println("Næsten korrekt knap blev trykket: Kortet vises igen indenfor 10 min igen");
         controller.incrementAlmostCorrectCount();
-        cardChangeListener.onNextCard();
-        // når 10 minut er gået skal kortet vises igen og incrementAlmostCorrectCount skal falde med 1
-
+        cardScheduler.scheduleNextCard(0.16667, controller.getCurrentCardIndex()); //10 min i dage
     }
 
     public void partlyCorrectButtonPressed() {
-        //scheduleReview(5); //5 min
-        System.out.println("Delvist korrekt knap blev trykket: Kortet visses tidligst om 5 min igen");
-
+        System.out.println("Delvist korrekt knap blev trykket: Kortet vises igen indenfor 5 min igen");
         controller.incrementPartlyCorrectCount();
-        cardChangeListener.onNextCard();
-        // når 5 minut er gået skal kortet vises igen og incrementPartlyCorrectCount skal falde med 1
-
+        cardScheduler.scheduleNextCard(0.08333, controller.getCurrentCardIndex()); //5 minutter i dage
     }
 
-    public void notCorrectButtonPressed() {
-
-        System.out.println("Ikke korrekt knap blev trykket: Skifter til næste kort med det samme");
+    public void notCorrectButtonPressed(List<Cards> allCards) {
+        System.out.println("Ikke korrekt knap blev trykket: Kortet visses igen indenfor 1 min igen");
         controller.incrementNotCorrectCount();
 
-
+        lastIncorrectCard = controller.getCurrentCard();
         lastIncorrectIndex = controller.getCurrentCardIndex();
+        skipToNextCard();
 
-        cardChangeListener.onNextCard();
-
-        scheduleNotCorrect(1, TimeUnit.MINUTES);
-    }
-
-    private void scheduleNotCorrect( long delay, TimeUnit timeUnit) {
-        scheduler.schedule(() -> {
+        // Schedule the next card after 1 minute
+        cardScheduler.schedule(() -> {
             Platform.runLater(() -> {
                 controller.decrementNotCorrectCount();
                 controller.updateLabel();
-                System.out.println("Et kort fra Ikke korrekt kan vises igen");
-
-                if (lastIncorrectCard != null) {
-                    System.out.println("Viser det sidste ikke korrekte kort igen: " + lastIncorrectCard);
-                    // Her kan du bruge lastIncorrectCard til at vise det kort igen
-                }
-
-                // Nulstil variablen
-                lastIncorrectCard = null;
+                controller.showCardAtIndex(lastIncorrectIndex);
+                controller.userManuallySwitching = false; // Brugeren har nu skiftet kort manuelt
             });
-        }, delay, timeUnit);
+        }, 1, TimeUnit.MINUTES);
     }
-
 }

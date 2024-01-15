@@ -1,0 +1,44 @@
+#appPane {
+    -fx-background-color: #333333;
+}
+.dark-mode-label {
+    -fx-text-fill: white;
+}
+
+.dark-mode-toggle-button {
+    -fx-background-color: #6441a5; /* Baggrundsfarve, kan tilpasses */
+    -fx-text-fill: #ffffff; /* Tekstfarve, kan tilpasses */
+    -fx-font-size: 14px; /* Skriftstørrelse, kan tilpasses */
+    -fx-font-weight: bold; /* Fed skrift, kan tilpasses */
+    -fx-padding: 5 10 5 10; /* Indvendig polstring, kan tilpasses */
+    -fx-background-radius: 5; /* Afrundede hjørner, kan tilpasses */
+}
+
+.dark-mode-toggle-button:selected {
+    -fx-background-color: #9147ff; /* Baggrundsfarve, kan tilpasses for valgt tilstand */
+}
+.dark-mode-button {
+    -fx-background-color: #6441a5; /* Baggrundsfarve, kan tilpasses */
+    -fx-text-fill: #ffffff; /* Tekstfarve, kan tilpasses */
+    -fx-font-size: 14px; /* Skriftstørrelse, kan tilpasses */
+    -fx-font-weight: bold; /* Fed skrift, kan tilpasses */
+    -fx-padding: 5 10 5 10; /* Indvendig polstring, kan tilpasses */
+    -fx-background-radius: 5; /* Afrundede hjørner, kan tilpasses */
+}
+
+.twitch-button:hover {
+    -fx-background-color: #8e63c5; /* Baggrundsfarve ved hover, kan tilpasses */
+}
+
+.twitch-button:pressed {
+    -fx-background-color: #4c2983; /* Baggrundsfarve ved tryk, kan tilpasses */
+}
+
+.twitch-hbox {
+    -fx-spacing: 10; /* Afstand mellem knapperne, kan tilpasses */
+}
+
+.twitch-hbox .twitch-button {
+    -fx-min-width: 100; /* Minimumsbredde for knapperne, kan tilpasses */
+    -fx-max-width: 100; /* Maksimal bredde for knapperne, kan tilpasses */
+}

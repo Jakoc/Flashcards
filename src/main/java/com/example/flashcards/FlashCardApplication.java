@@ -11,12 +11,17 @@ import java.io.IOException;
 public class FlashCardApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(FlashCardApplication.class.getResource("flashcard.fxml"));
-        Parent root = fxmlLoader.load();
-        Scene scene = new Scene(root);
-        stage.setTitle("Flashcard");
-        stage.setScene(scene);
-        stage.show();
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(FlashCardApplication.class.getResource("flashcard.fxml"));
+            Parent root = fxmlLoader.load();
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/example/flashcards/light-mode.css").toExternalForm());
+            stage.setTitle("Flashcard");
+            stage.setScene(scene);
+            stage.show();
+        } catch (IOException e){
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {launch();

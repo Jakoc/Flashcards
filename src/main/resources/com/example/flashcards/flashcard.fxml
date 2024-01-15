@@ -2,39 +2,46 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Font?>
 
+
+<?import java.net.URL?>
 <AnchorPane fx:id="appPane" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.flashcards.FlashCardController">
+   <stylesheets>
+   </stylesheets>
    <children>
       <ImageView fx:id="flashcardImage" fitHeight="336.0" fitWidth="358.0" layoutX="228.0" layoutY="112.0" pickOnBounds="true" preserveRatio="true" />
-      <Label fx:id="questionLabel" layoutX="350.0" layoutY="77.0" text="Spørgsmål">
+      <Label fx:id="questionLabel" styleClass="light-mode-label" layoutX="350.0" layoutY="77.0" text="Spørgsmål">
          <font>
             <Font size="24.0" />
          </font>
       </Label>
       <HBox fx:id="svarKnap" alignment="CENTER" layoutX="50.0" layoutY="500.0" prefHeight="146.0" prefWidth="500.0" visible="true">
-         <Button fx:id="showAnswerButton" layoutX="264.0" layoutY="470.0" mnemonicParsing="false" onAction="#answerButtonPressed" text="Vis svar" />
+         <Button fx:id="showAnswerButton" styleClass="light-mode-button" layoutX="264.0" layoutY="470.0" mnemonicParsing="false" onAction="#answerButtonPressed" text="Vis svar" />
       </HBox>
-      <Label fx:id="allCardsLabel" layoutX="28.0" layoutY="126.0" text="SAK" />
-      <Label fx:id="cardsLeftLabel" layoutX="26.0" layoutY="168.0" text="AKM" />
-      <Label fx:id="correctCardsLabel" layoutX="27.0" layoutY="204.0" text="AKK" />
-      <Label fx:id="almostCorrectLabel" layoutX="26.0" layoutY="244.0" text="ANK" />
-      <Label fx:id="partlyCorrectLabel" layoutX="27.0" layoutY="280.0" text="ADK" />
-      <Label fx:id="notCorrectLabel" layoutX="29.0" layoutY="314.0" text="AIK" />
-      <Label fx:id="answerLabel" layoutX="264.0" layoutY="470.0" text="" visible="false" />
-      <Label fx:id="infoLabel" layoutX="264.0" layoutY="500.0" text="" visible="false" />
-      <HBox fx:id="svarVBox" alignment="CENTER" layoutX="50.0" layoutY="500.0" prefHeight="146.0" prefWidth="500.0" visible="false">
-         <Button fx:id="correctButton" text="Korrekt" />
-         <Button fx:id="almostCorrectButton" text="Næsten korrekt" />
-         <Button fx:id="partlyCorrectButton" text="Delvist korrekt" />
-         <Button fx:id="notCorrectButton" text="Ikke korrekt" />
+      <Label fx:id="allCardsLabel" styleClass="light-mode-label" layoutX="28.0" layoutY="126.0" text="SAK" />
+      <Label fx:id="cardsLeftLabel" styleClass="light-mode-label" layoutX="26.0" layoutY="168.0" text="AKM" />
+      <Label fx:id="correctCardsLabel" styleClass="light-mode-label" layoutX="27.0" layoutY="204.0" text="AKK" />
+      <Label fx:id="almostCorrectLabel" styleClass="light-mode-label" layoutX="26.0" layoutY="244.0" text="ANK" />
+      <Label fx:id="partlyCorrectLabel" styleClass="light-mode-label" layoutX="27.0" layoutY="280.0" text="ADK" />
+      <Label fx:id="notCorrectLabel" styleClass="light-mode-label" layoutX="29.0" layoutY="314.0" text="AIK" />
+      <Label fx:id="answerLabel" styleClass="light-mode-label" layoutX="264.0" layoutY="470.0" text="" visible="false" />
+      <Label fx:id="infoLabel" styleClass="light-mode-labell" layoutX="264.0" layoutY="500.0" text="" visible="false" />
+      <HBox fx:id="svarVBox" styleClass="light-mode-hbox" alignment="CENTER" layoutX="50.0" layoutY="500.0" prefHeight="146.0" prefWidth="500.0" visible="false">
+         <Button fx:id="correctButton" styleClass="light-mode-button" text="Korrekt" />
+         <Button fx:id="almostCorrectButton" styleClass="light-mode-button" text="Næsten korrekt" />
+         <Button fx:id="partlyCorrectButton" styleClass="light-mode-button" text="Delvist korrekt" />
+         <Button fx:id="notCorrectButton" styleClass="light-mode-button" text="Ikke korrekt" />
       </HBox>
-      <Button fx:id="irrelevantButton" layoutX="350.0" layoutY="14.0" mnemonicParsing="false" onAction="#IrrelevantButtonPressed" text="Irrelevant" />
-      <Button fx:id="addCardButton" layoutX="417.0" layoutY="14.0" mnemonicParsing="false" onAction="#addCardButtonPressed" text="Tilføj Kort" />
-      <Button fx:id="restartButton" layoutX="300.0" layoutY="14.0" mnemonicParsing="false" onAction="#RestartButtonPressed" text="Restart" />
-      <Button fx:id="finishButton" layoutX="231.0" layoutY="14.0" mnemonicParsing="false" onAction="#finishButtonPressed" text="Afslut sæt" />
+      <Button fx:id="irrelevantButton" styleClass="light-mode-button" layoutX="350.0" layoutY="14.0" mnemonicParsing="false" onAction="#IrrelevantButtonPressed" text="Irrelevant" />
+      <Button fx:id="addCardButton" styleClass="light-mode-button" layoutX="417.0" layoutY="14.0" mnemonicParsing="false" onAction="#addCardButtonPressed" text="Tilføj Kort" />
+      <Button fx:id="restartButton" styleClass="light-mode-button" layoutX="300.0" layoutY="14.0" mnemonicParsing="false" onAction="#RestartButtonPressed" text="Restart" />
+      <Button fx:id="finishButton" styleClass="light-mode-button" layoutX="231.0" layoutY="14.0" mnemonicParsing="false" onAction="#finishButtonPressed" text="Afslut sæt" />
+      <Label fx:id="timerLabel" styleClass="light-mode-label" layoutX="24.0" layoutY="355.0" text="Tid gået på kort: " />
+      <ToggleButton fx:id="modeSwitch" styleClass="light-mode-toggle-button" layoutX="497.0" layoutY="14.0" mnemonicParsing="false" onAction="#handleModeSwitch" text="Light mode" />
    </children>
 </AnchorPane>
