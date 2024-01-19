@@ -10,23 +10,19 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-
+import java.time.LocalDateTime;
 import java.io.*;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
-public class FlashCardController implements CardChangeListener {
+public class FlashCardController {
 
     private ButtonFunktion buttonFunctions;
     private DAO dao;
     List<Cards> allCards = new ArrayList<>();
-    Cards lastIncorrectCard;
-    private Random random = new Random();
     private FlashCardScheduler cardScheduler;
-    int lastIncorrectIndex;
     public boolean userManuallySwitching = false;
     private long elapsedTime;
 
@@ -45,33 +41,42 @@ public class FlashCardController implements CardChangeListener {
     @FXML
     private ToggleButton modeSwitch;
     @FXML
-    private Scene scene;
-    @FXML
     private AnchorPane appPane;
+    private int lastActiveCardIndex = -1;
+    private String lastButtonPressed = null;
     private int currentCardIndex;
     private final String stateFilePath = "state.properties";
     private int correctCount;
     private int almostCorrectCount;
     private int partlyCorrectCount;
     private int notCorrectCount;
-    Instant notCorrectPressedTime;
     private SimpleDateFormat timeFormat = new SimpleDateFormat("mm:ss");
 
+    //hvad der ske ved opstart
     public void initialize() {
+        //opretter en ny dao for at få adgang til db
         dao = new DAO();
         try {
             allCards = dao.getAllCards(); // Hent alle kort fra databasen
             importAndInsertCardsFromFile();
-
-
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        buttonFunctions = new ButtonFunktion(this, this);
-        //scene.getStylesheets().add(getClass().getResource("/com/example/flashcards/light-mode.css").toExternalForm());
+        //laver en ny scheduler og forbinder med controller og dao
+        cardScheduler = new FlashCardScheduler(this, dao);
+        setCardScheduler(cardScheduler);
+        cardScheduler.setNextCardIndex(0);
+        // Start visning af kort
+        cardScheduler.startDisplayingCards();
+        // planlægger visning af næste kort fra køen
+        cardScheduler.scheduleNextCardFromQueue();
+        buttonFunctions = new ButtonFunktion(this, cardScheduler);
+        //loader appen fra hvor man lukkede det sidst
         loadState();
+        //opdatere label og timer
         updateLabel();
         startTimer();
+        //viser det kort, der sidst blev vist
         if (allCards != null && !allCards.isEmpty()) {
             if (currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
                 showCardAtIndex(currentCardIndex); // Vis det kort, der var vist sidst
@@ -82,7 +87,7 @@ public class FlashCardController implements CardChangeListener {
             System.out.println("Ingen kort fundet i databasen.");
         }
     }
-
+    //importere og indsæt kortene fra filerne
     public void importAndInsertCardsFromFile() {
         try {
             List<Cards> importedCards = dao.importCardsfromList("C:\\Users\\damer\\Downloads\\Great Works of Art__Artists.txt");
@@ -102,20 +107,26 @@ public class FlashCardController implements CardChangeListener {
     }
 
     public void showCardAtIndex(int index) {
+        // Tjek om kortene er ikke-tomme, og om det givne indeks er gyldigt
         if (!allCards.isEmpty() && index >= 0 && index < allCards.size()) {
+            // Hent det næste kort baseret på indeks
             Cards nextCard = allCards.get(index);
 
+            // Opdater labels med kortets spørgsmål og svar
             questionLabel.setText(nextCard.getQuestion());
             answerLabel.setText(nextCard.getAnswer());
 
+            // billede fil og viser billede til kort
             String imagePath = "file:C:\\Users\\damer\\IdeaProjects\\Flashcards\\src\\main\\resources\\com\\example\\flashcards\\greatartists\\" + nextCard.getImageName();
             Image image = new Image(imagePath);
             flashcardImage.setImage(image);
 
+            //information tekst
             String infoText = "" + nextCard.getTitle() + "\n" +
                     "" + nextCard.getYear() + " - " + nextCard.getTimePeriod();
-
             infoLabel.setText(infoText);
+
+            // Hvis brugeren manuelt skifter kort, opdater det aktuelle kortindeks og gem tilstanden
             if (userManuallySwitching) {
                 currentCardIndex = index;
                 System.out.println("Viser kort på position: " + currentCardIndex);
@@ -125,15 +136,23 @@ public class FlashCardController implements CardChangeListener {
         } else {
             System.out.println("Ingen kort");
         }
+        // Opdater det sidst aktive kortindeks
+        lastActiveCardIndex = index;
     }
+    //sætter kort køen
     public void setCardScheduler(FlashCardScheduler cardScheduler) {
         this.cardScheduler = cardScheduler;
     }
-
+    //sætter det nuværende kort index
+    public void setCurrentCardIndex(int index) {
+        this.currentCardIndex = index;
+    }
+    //for det nuværende kort index
     public int getCurrentCardIndex() {
         return currentCardIndex;
     }
 
+    //fjerne vis svar knap og sætter svar text op samt vurderings knapper
     public void answerButtonPressed(ActionEvent event) {
         //gør knappen usynlig
         Button showAnswerButton = (Button) event.getSource();
@@ -143,29 +162,31 @@ public class FlashCardController implements CardChangeListener {
         svarVBox.setVisible(true);
         System.out.println("Vis svar knap blev trykket");
 
+        Cards currentCard = getCurrentCard();
 
         //opretter knapper deres event, og svar tekst + info
         Button correctButton = new Button("Korrekt");
-        correctButton.setOnAction(e -> buttonFunctions.correctButtonPressed());
+        correctButton.setOnAction(e -> buttonFunctions.correctButtonPressed(currentCard));
 
 
         Button almostCorrectButton = new Button("Næsten korrekt");
-        almostCorrectButton.setOnAction(e -> buttonFunctions.almostCorrectButtonPressed());
+        almostCorrectButton.setOnAction(e -> buttonFunctions.almostCorrectButtonPressed(currentCard));
 
         Button partlyCorrectButton = new Button("Delvist korrekt");
-        partlyCorrectButton.setOnAction(e -> buttonFunctions.partlyCorrectButtonPressed());
+        partlyCorrectButton.setOnAction(e -> buttonFunctions.partlyCorrectButtonPressed(currentCard));
 
         Button notCorrectButton = new Button("Ikke korrekt");
-        notCorrectButton.setOnAction(e -> buttonFunctions.notCorrectButtonPressed(allCards));
+        notCorrectButton.setOnAction(e -> buttonFunctions.  notCorrectButtonPressed(currentCard));
 
         svarVBox.getChildren().clear();
         svarVBox.getChildren().addAll(correctButton, almostCorrectButton, partlyCorrectButton, notCorrectButton);
         answerLabel.setText(answerLabel.getText());
         infoLabel.setText(infoLabel.getText());
+        saveState();
 
 
     }
-
+    //for det nuværende kort, hvis det er et
     public Cards getCurrentCard() {
         if (!allCards.isEmpty() && currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
             return allCards.get(currentCardIndex);
@@ -175,7 +196,7 @@ public class FlashCardController implements CardChangeListener {
 
 
     @FXML
-    public void onNextCard() {
+    public void onNextCard(ActionEvent event) {
         Platform.runLater(() -> {
             // Fjern label og tilføj ny knap igen
             answerLabel.setVisible(false);
@@ -183,37 +204,45 @@ public class FlashCardController implements CardChangeListener {
             infoLabel.setVisible(false);
             showAnswerButton.setVisible(true);
 
-            if (lastIncorrectCard != null && notCorrectPressedTime != null &&
-                    Duration.between(notCorrectPressedTime, Instant.now()).toMinutes() >= 1) {
-                // Kun skift kort, hvis der er gået mindst 1 minut siden "Ikke korrekt" blev trykket
-                int indexToDisplay = allCards.indexOf(lastIncorrectCard);
-                if (indexToDisplay != -1) {
-                    System.out.println("Viser det sidste ikke korrekte kort igen: " + lastIncorrectCard);
-                    currentCardIndex = indexToDisplay;
-                    lastIncorrectCard = null; // Nulstil det sidste ikke korrekte kort
-                    notCorrectPressedTime = null; // Nulstil tiden
-                    cardScheduler.cancelScheduledTask(currentCardIndex); // Annuller eventuelle planlagte opgaver
-                }
-            } else {
-                currentCardIndex++; // Gå til næste kort, hvis der er flere
-
-                if (currentCardIndex >= allCards.size()) {
-                    setIsComplete();
-                    System.out.println("Ingen flere kort tilbage.");
-                } else {
-                    showCardAtIndex(currentCardIndex);
-                    saveState();
-                }
-            }
-
-            Integer nextCardIndex = cardScheduler.getNextCardIndex();
-            if (nextCardIndex != null) {
-                showCardAtIndex(nextCardIndex);
-                cardScheduler.clearNextCardIndex(); // Ryd information om det næste kort
-            }
+            // Hent det næste kort fra køen, hvis det er klar til at blive vist
+            int nextCardIndex = calculateNextCardIndexBasedOnUserAction();
+            showCardAtIndex(nextCardIndex);
+            saveState();
         });
     }
 
+    int calculateNextCardIndexBasedOnUserAction() {
+        int nextCardIndex = currentCardIndex; // Start med det nuværende kortindeks
+        // Tjek hvilken knap der blev trykket sidst og justér indekset baseret på det
+        if (lastButtonPressed != null) {
+            switch (lastButtonPressed) {
+                case "correct":
+                    nextCardIndex += 4;
+                    break;
+                case "almostCorrect":
+                    nextCardIndex += 3;
+                    break;
+                case "partlyCorrect":
+                    nextCardIndex += 2;
+                    break;
+                case "notCorrect":
+                    nextCardIndex += 1;
+                    break;
+            }
+        }
+
+        // Hvis vi er nået forbi sidste kort, start forfra
+        if (nextCardIndex >= allCards.size()) {
+            nextCardIndex = nextCardIndex % allCards.size();
+        }
+
+        return nextCardIndex;
+    }
+    //tjekker om kort er klar til at blive vist, det er det vist kortets show time er ovre
+    boolean isCardReadyToShow(Cards card) {
+        return card.getShowTime() != null && card.getShowTime().before(new Timestamp(System.currentTimeMillis()));
+    }
+    //alert box hvis man er færdig
     void setIsComplete() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Færdig!");
@@ -221,22 +250,8 @@ public class FlashCardController implements CardChangeListener {
         alert.setContentText("Du er færdig med sættet. Nu må du se fjernsyn");
         alert.showAndWait();
     }
-    public Cards getLastIncorrectCard() {
-        return lastIncorrectCard;
-    }
 
-    public void setLastIncorrectCard(Cards lastIncorrectCard) {
-        this.lastIncorrectCard = lastIncorrectCard;
-    }
-
-    public int getLastIncorrectIndex() {
-        return lastIncorrectIndex;
-    }
-
-    public void setLastIncorrectIndex(int lastIncorrectIndex) {
-        this.lastIncorrectIndex = lastIncorrectIndex;
-    }
-
+    //restart knap sætter alt til det udgangspunkt som ved opstart af app og viser det første kort i index
     public void RestartButtonPressed(ActionEvent event) {
         userWantsToRestart();
         currentCardIndex = 0;
@@ -244,6 +259,13 @@ public class FlashCardController implements CardChangeListener {
         almostCorrectCount = 0;
         partlyCorrectCount = 0;
         notCorrectCount = 0;
+
+        showAnswerButton.setVisible(true);
+        svarVBox.setVisible(false);
+        answerLabel.setVisible(false);
+        infoLabel.setVisible(false);
+        updateTimerLabel();
+        resetElapsedTime();
         updateLabel();
         if (!allCards.isEmpty()) {
             showCardAtIndex(currentCardIndex);
@@ -251,7 +273,7 @@ public class FlashCardController implements CardChangeListener {
             System.out.println("Ingen kort fundet");
         }
     }
-
+    //alert box til at bekræfte at man starte forfra
     private boolean userWantsToRestart() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Afslut eller genstart");
@@ -260,14 +282,16 @@ public class FlashCardController implements CardChangeListener {
         Optional<ButtonType> result = alert.showAndWait();
         return result.isPresent() && result.get() == ButtonType.OK;
     }
-
+    //hvis man trykker færdig knap
     public void finishButtonPressed(ActionEvent event) {
         System.out.println("Hold da op du er hurtig færdig");
         setIsComplete();
     }
 
     private void saveState() {
+        //laver en property til at gemme tilstanden af appen
         Properties properties = new Properties();
+        //property for det aktuelle kortindex og tællere
         properties.setProperty("currentCardIndex", String.valueOf(currentCardIndex));
         properties.setProperty("correctCount", String.valueOf(correctCount));
         properties.setProperty("almostCorrectCount", String.valueOf(almostCorrectCount));
@@ -275,13 +299,14 @@ public class FlashCardController implements CardChangeListener {
         properties.setProperty("notCorrectCount", String.valueOf(notCorrectCount));
 
         try (OutputStream output = new FileOutputStream(stateFilePath)) {
+            // Gem egenskaberne til tilstandsfilen
             properties.store(output, "Flashcard State");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Gemmer app");
+        //System.out.println("Gemmer app");
     }
-
+    //metoden til at loade appen fra hvor det blev sluttet
     private void loadState() {
         Properties properties = new Properties();
 
@@ -301,47 +326,47 @@ public class FlashCardController implements CardChangeListener {
         }
         System.out.println("Indlæser app");
     }
-
+    //+1 til korrekt label
     public void incrementCorrectCount() {
         correctCount++;
         updateLabel();
     }
-
+    //-1 til korrekt label
     public void decrementCorrectCount() {
         correctCount--;
         updateLabel();
     }
-
+    //+1 til næsten korrekt label
     public void incrementAlmostCorrectCount() {
         almostCorrectCount++;
         updateLabel();
     }
-
+    //-1 til næsten korrekt label
     public void decrementAlmostCorrectCount() {
         almostCorrectCount--;
         updateLabel();
     }
-
+    //+1 til delvist korrekt label
     public void incrementPartlyCorrectCount() {
         partlyCorrectCount++;
         updateLabel();
     }
-
+    //-1 til delvist korrekt label
     public void decrementPartlyCorrectCount() {
         partlyCorrectCount--;
         updateLabel();
     }
-
+    //+1 til ikke korrekt label
     public void incrementNotCorrectCount() {
         notCorrectCount++;
         updateLabel();
     }
-
+    //-1 til ikke korrekt label
     public void decrementNotCorrectCount() {
         notCorrectCount--;
         updateLabel();
     }
-
+    //metoden til hvad der står i de forskellige labels + udringen til dem
     public void updateLabel() {
         allCardsLabel.setText("Fulde antal af kort: " + allCards.size());
         cardsLeftLabel.setText("Manglende kort: " + (allCards.size() - (correctCount + almostCorrectCount + partlyCorrectCount + notCorrectCount)));
@@ -350,7 +375,7 @@ public class FlashCardController implements CardChangeListener {
         partlyCorrectLabel.setText("Delvist ikke korrekte kort: " + partlyCorrectCount);
         notCorrectLabel.setText("Ikke korrekte kort: " + notCorrectCount);
     }
-
+    //hvis man trykker på irrelevant knappen, så fjerner den det kort og opdatere labels så de passer
     public void IrrelevantButtonPressed(ActionEvent event) {
         if (!allCards.isEmpty() && currentCardIndex >= 0 && currentCardIndex < allCards.size()) {
             Cards irrelevantCard = allCards.get(currentCardIndex);
@@ -360,7 +385,7 @@ public class FlashCardController implements CardChangeListener {
             allCards.remove(irrelevantCard);
 
             if (!allCards.isEmpty()) {
-                onNextCard();
+                onNextCard(event);
             } else {
 
                 System.out.println("Ingen flere kort tilbage.");
@@ -371,9 +396,9 @@ public class FlashCardController implements CardChangeListener {
         }
         updateLabel();
     }
-
+    //Laver et dialog som man kan skrive i. Her kan man id og showtime giver det selv, resten skal man selv udfylde
     public void addCardButtonPressed(ActionEvent event) {
-        //tilføj et nyt kort til databasen brugeren skal selv kunne udfylde category, question, imageName, answer, titel, timePeriod, year. systemet skal selv give kortet et ID
+
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Tilføj nyt kort");
         dialog.setHeaderText("Udfyld kortoplysninger:");
@@ -443,26 +468,32 @@ public class FlashCardController implements CardChangeListener {
                 System.err.println("Fejl: Årstal er ikke et gyldigt tal!");
                 return;
             }
-
+            //giver kortet et id
             String generatedCardId = UUID.randomUUID().toString();
 
 
-            Cards newCard = new Cards(generatedCardId, category, question, imageName, answer, title, year, timePeriod);
+            Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
 
+            Cards newCard = new Cards(generatedCardId, category, question, imageName, answer, title, year, timePeriod, currentTimestamp);
+
+            LocalDateTime nextShowTime = currentTimestamp.toLocalDateTime().plusMinutes(1);
+            newCard.setShowTime(Timestamp.valueOf(nextShowTime));
             // Indsæt det nye kort i databasen ved hjælp af DAO
             dao.insertCards(Collections.singletonList(newCard));
         }
     }
+    //opdatere timer label
     public void updateTimerLabel() {
         String formattedTime = timeFormat.format(elapsedTime);
         Platform.runLater(() -> {
             timerLabel.setText("Tid gået på kort: " + formattedTime);
         });
     }
-
+    //reset tiden
     public void resetElapsedTime() {
         elapsedTime = 0;
     }
+    //starter tiden
     public void startTimer() {
         new Thread(() -> {
             while (true) {
@@ -476,6 +507,8 @@ public class FlashCardController implements CardChangeListener {
             }
         }).start();
     }
+
+    //håndtere når man trykker på tema knappen om den skal skifte til dark mode eller light mode
     @FXML
     private void handleModeSwitch(ActionEvent event) {
         Scene currentScene = modeSwitch.getScene();
@@ -496,6 +529,8 @@ public class FlashCardController implements CardChangeListener {
         updateStyles();
         saveState();
     }
+
+    //hvad der opdateres når man skifter tema
     private void updateStyles() {
         if (modeSwitch.isSelected()) {
             // Skift til dark mode
@@ -544,33 +579,5 @@ public class FlashCardController implements CardChangeListener {
             timerLabel.getStyleClass().setAll("light-mode-label");
             questionLabel.getStyleClass().setAll("light-mode-label");
         }
-
-    }
-    private void enableDarkMode() {
-        if (scene != null) {
-            scene.getStylesheets().remove(getClass().getResource("/com/example/flashcards/light-mode.css").toExternalForm());
-            scene.getStylesheets().add(getClass().getResource("/com/example/flashcards/dark-mode.css").toExternalForm());
-        }
-    }
-
-    private void enableLightMode() {
-        if (scene != null) {
-            scene.getStylesheets().remove(getClass().getResource("/com/example/flashcards/dark-mode.css").toExternalForm());
-            scene.getStylesheets().add(getClass().getResource("/com/example/flashcards/light-mode.css").toExternalForm());
-        }
-    }
-    public void setStylesheet(Scene scene){
-        scene.getStylesheets().add(getClass().getResource("/com/example/flashcards/light-mode.css").toExternalForm());
-    }
-    public List<Cards> getAllCards() {
-        return allCards;
-    }
-
-    public boolean isUserManuallySwitching() {
-        return userManuallySwitching;
-    }
-
-    public void setUserManuallySwitching(boolean value) {
-        userManuallySwitching = value;
     }
 }

@@ -19,6 +19,7 @@ public class FlashCardApplication extends Application {
             stage.setTitle("Flashcard");
             stage.setScene(scene);
             stage.show();
+            stage.setResizable(false);
         } catch (IOException e){
             e.printStackTrace();
         }

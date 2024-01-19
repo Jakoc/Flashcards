@@ -5,8 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DAO {
@@ -25,6 +25,8 @@ public class DAO {
         List<Cards> cards = new ArrayList<>();
         String query = "SELECT * FROM card";
 
+        int index = 0;
+
         try (PreparedStatement pstmt = con.prepareStatement(query);
              ResultSet rs = pstmt.executeQuery()) {
 
@@ -37,11 +39,15 @@ public class DAO {
                 String titel = rs.getString("titel");
                 int year = rs.getInt("year");
                 String timePeriod = rs.getString("timeperiod");
+                Timestamp showTime = rs.getTimestamp("show_time");
 
+                Cards card = new Cards(cardId, category, question, imageName, answer, titel, year, timePeriod, showTime);
 
+                card.setShowTime(showTime);
+                card.setIndex(index);
 
-                Cards card = new Cards(cardId, category, question, imageName, answer, titel, year, timePeriod);
                 cards.add(card);
+                index++;
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -75,11 +81,12 @@ public class DAO {
                         continue;
                     }
 
+                    String question = "Artist?";
+                    Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
 
+                    Cards card = new Cards(cardID, category, question, imageName, answer, titel, year, timePeriod, currentTimestamp);
+                    card.setShowTime(currentTimestamp);
 
-                    String question = "Artist?"; // Set din spørgsmålstekst her
-
-                    Cards card = new Cards(cardID, category, question, imageName, answer, titel, year, timePeriod);
                     importedCards.add(card);
                 } else {
                     failedCards.add(lineJustFetched);
@@ -102,10 +109,13 @@ public class DAO {
         return importedCards;
     }
     public void insertCards(List<Cards> cards) {
-        String query = "INSERT INTO card (card_id, category, question, image_name, answer, titel, year, timeperiod) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO card (card_id, category, question, image_name, answer, titel, year, timeperiod, show_time) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = con.prepareStatement(query)) {
+
             for (Cards card : cards) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String formattedTimestamp = dateFormat.format(card.getShowTime());
 
                 pstmt.setString(1, card.getCardId());
                 pstmt.setString(2, card.getCategory());
@@ -115,11 +125,15 @@ public class DAO {
                 pstmt.setString(6, card.getTitle());
                 pstmt.setInt(7, card.getYear());
                 pstmt.setString(8, card.getTimePeriod());
+                pstmt.setString(9,formattedTimestamp);
 
                 pstmt.executeUpdate(); // Udfør indsættelse i databasen
+                System.out.println("Card Index: " + card.getIndex().intValue());
             }
+
         } catch (SQLException e) {
             System.out.println("dubleret kort kommer ikke med");
+            e.printStackTrace();
         }
     }
 

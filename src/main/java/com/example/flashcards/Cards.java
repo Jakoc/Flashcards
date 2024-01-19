@@ -1,5 +1,9 @@
 package com.example.flashcards;
 
+import java.sql.Timestamp;
+import java.util.concurrent.TimeUnit;
+
+
 public class Cards {
     private String cardId;
     private String category;
@@ -10,11 +14,10 @@ public class Cards {
     private int year;
     private String timePeriod;
     private boolean markedCorrect;
-    private int repetition;
-    private int interval;
     private int index;
+    private Timestamp showTime;
 
-    public Cards(String cardId, String category, String question, String imageName, String answer, String titel, int year, String timePeriod) {
+    public Cards(String cardId, String category, String question, String imageName, String answer, String titel, int year, String timePeriod, Timestamp showTime) {
         this.cardId = cardId;
         this.category = category;
         this.question = question;
@@ -23,7 +26,9 @@ public class Cards {
         this.titel = titel;
         this.year = year;
         this.timePeriod = timePeriod;
+        this.showTime = showTime;
         this.markedCorrect = false;
+
     }
 
 
@@ -87,33 +92,41 @@ public class Cards {
         return timePeriod;
     }
 
-    public void setTimePeriod(String timePeriod) {
-        this.timePeriod = timePeriod;
-    }
-
-    public int getRepetition() {
-        return repetition;
-    }
-    public void setRepetition(int repetition) {
-        this.repetition = repetition;
-    }
-    public int getInterval() {
-        return interval;
-    }
-
-    public void setInterval(int interval) {
-        this.interval = interval;
-    }
-    public boolean isMarkedCorrect() {
-        return markedCorrect;
-    }
-
-    public int getIndex() {
+    public Integer getIndex() {
         return index;
     }
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public Timestamp getShowTime() {
+        return showTime;
+    }
+
+    public void setShowTime(Timestamp showTime) {
+        this.showTime = showTime;
+    }
+
+    public void setNextShowTimeBasedOnButton(String buttonPressed) {
+        long currentTime = System.currentTimeMillis();
+        switch (buttonPressed) {
+            case "korrekt":
+                this.showTime = new Timestamp(currentTime + TimeUnit.DAYS.toMillis(4));
+                break;
+            case "næsten korrekt":
+                this.showTime = new Timestamp(currentTime + TimeUnit.MINUTES.toMillis(10));
+                break;
+            case "delvist korrekt":
+                this.showTime = new Timestamp(currentTime + TimeUnit.MINUTES.toMillis(5));
+                break;
+            case "ikke korrekt":
+                this.showTime = new Timestamp(currentTime + TimeUnit.MINUTES.toMillis(1));
+                break;
+            default:
+                // Håndter fejl eller ukendt knap
+                break;
+        }
     }
 }
 

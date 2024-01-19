@@ -1,78 +1,144 @@
 package com.example.flashcards;
 
-import javafx.animation.KeyFrame;
-
-import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.util.Duration;
-
-import java.sql.Time;
-import java.time.Instant;
+import javafx.event.ActionEvent;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.PriorityQueue;
+import java.util.Comparator;
 
 
 public class ButtonFunktion {
     private FlashCardController controller;
     private FlashCardScheduler cardScheduler;
     private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private Cards lastIncorrectCard;
-    private int lastIncorrectIndex;
-    private Queue<Integer> cardQueue = new LinkedList<>();
+    private Queue<Cards> cardQueue = new PriorityQueue<>(Comparator.comparing(Cards::getShowTime));
 
-    public ButtonFunktion(CardChangeListener listener,FlashCardController controller) {
+    public ButtonFunktion(FlashCardController controller, FlashCardScheduler cardScheduler) {
         this.controller = controller;
-        this.cardScheduler = new FlashCardScheduler(controller);
-        controller.setCardScheduler(cardScheduler);
+        this.cardScheduler = cardScheduler;
     }
-    public void skipToNextCard() {
-        int currentCardIndex = controller.getCurrentCardIndex();
-        cardQueue.offer(currentCardIndex);
-        controller.onNextCard();
-        cardScheduler.cancelScheduledTask(currentCardIndex);
-        controller.userManuallySwitching = true;
+
+    public void correctButtonPressed(Cards card) {
+        //visnings tidspunkt baseret på hvilken knap
+        card.setNextShowTimeBasedOnButton("korrekt");
+        updateCardInQueue(card);
+        cardScheduler.setUserManuallySwitching(true);
+        //tilføjer kort til den kø, som skal vises efter delay
+        cardScheduler.addCardToQueue(card);
+        //planlæger hvornår kortet skal vises igen
+        if (!cardQueue.isEmpty()) {
+            cardScheduler.scheduleNextCardFromQueue();
+        }
+        //opdatere passende label
+        controller.incrementCorrectCount();
+        //skifter til næste kort og viser næste kort
+        controller.setCurrentCardIndex(controller.getCurrentCardIndex() + 4);
+        controller.showCardAtIndex(controller.getCurrentCardIndex());
+        //opdatere tiden
         controller.resetElapsedTime();
         controller.updateTimerLabel();
+
+
+        //planlægger hvornår label skal opdateres igen når delay er færdig
+        long delay = TimeUnit.DAYS.toMillis(4);
+        scheduler.schedule(() -> {
+            Platform.runLater(() -> {
+                controller.decrementCorrectCount();
+                controller.updateLabel();
+            });
+        }, delay, TimeUnit.MILLISECONDS);
+
+        controller.onNextCard(new ActionEvent());
+
     }
 
-
-    public void correctButtonPressed() {
-        System.out.println("Korrekt knap blev trykket: Kortet vises tidligst om 4 dage igen");
-        controller.incrementCorrectCount();
-        cardScheduler.scheduleNextCard(4, controller.getCurrentCardIndex());
-    }
-
-    public void almostCorrectButtonPressed() {
-        System.out.println("Næsten korrekt knap blev trykket: Kortet vises igen indenfor 10 min igen");
+    public void almostCorrectButtonPressed(Cards card) {
+        card.setNextShowTimeBasedOnButton("næsten korrekt");
+        updateCardInQueue(card);
+        cardScheduler.setUserManuallySwitching(true);
         controller.incrementAlmostCorrectCount();
-        cardScheduler.scheduleNextCard(0.16667, controller.getCurrentCardIndex()); //10 min i dage
+        cardScheduler.addCardToQueue(card);
+        if (!cardQueue.isEmpty()) {
+            cardScheduler.scheduleNextCardFromQueue();
+        }
+        controller.setCurrentCardIndex(controller.getCurrentCardIndex() + 3); // Gå til næste kort
+        controller.showCardAtIndex(controller.getCurrentCardIndex());
+        controller.resetElapsedTime();
+        controller.updateTimerLabel();
+
+        long delay = TimeUnit.MINUTES.toMillis(10);
+        scheduler.schedule(() -> {
+            Platform.runLater(() -> {
+                controller.decrementAlmostCorrectCount();
+                controller.updateLabel();
+            });
+        }, delay, TimeUnit.MILLISECONDS);
+
+        controller.onNextCard(new ActionEvent());
     }
 
-    public void partlyCorrectButtonPressed() {
-        System.out.println("Delvist korrekt knap blev trykket: Kortet vises igen indenfor 5 min igen");
+    public void partlyCorrectButtonPressed(Cards card) {
+        card.setNextShowTimeBasedOnButton("delvist korrekt");
+        updateCardInQueue(card);
+        cardScheduler.setUserManuallySwitching(true);
         controller.incrementPartlyCorrectCount();
-        cardScheduler.scheduleNextCard(0.08333, controller.getCurrentCardIndex()); //5 minutter i dage
+        cardScheduler.addCardToQueue(card);
+        if (!cardQueue.isEmpty()) {
+            cardScheduler.scheduleNextCardFromQueue();
+        }
+        controller.setCurrentCardIndex(controller.getCurrentCardIndex() + 2); // Gå til næste kort
+        controller.showCardAtIndex(controller.getCurrentCardIndex());
+        controller.resetElapsedTime();
+        controller.updateTimerLabel();
+
+
+
+        long delay = TimeUnit.MINUTES.toMillis(5);
+        scheduler.schedule(() -> {
+            Platform.runLater(() -> {
+                controller.decrementPartlyCorrectCount();
+                controller.updateLabel();
+            });
+        }, delay, TimeUnit.MILLISECONDS);
+
+        controller.onNextCard(new ActionEvent());
     }
 
-    public void notCorrectButtonPressed(List<Cards> allCards) {
-        System.out.println("Ikke korrekt knap blev trykket: Kortet visses igen indenfor 1 min igen");
+    public void notCorrectButtonPressed(Cards card) {
+        card.setNextShowTimeBasedOnButton("ikke korrekt");
+        updateCardInQueue(card);
+        cardScheduler.setUserManuallySwitching(true);
         controller.incrementNotCorrectCount();
+        if (!cardQueue.isEmpty()) {
+            cardScheduler.scheduleNextCardFromQueue();
+        }
+        cardScheduler.addCardToQueue(card);
+        controller.setCurrentCardIndex(controller.getCurrentCardIndex() + 1); // Gå til næste kort
+        controller.showCardAtIndex(controller.getCurrentCardIndex());
+        controller.resetElapsedTime();
+        controller.updateTimerLabel();
 
-        lastIncorrectCard = controller.getCurrentCard();
-        lastIncorrectIndex = controller.getCurrentCardIndex();
-        skipToNextCard();
 
-        // Schedule the next card after 1 minute
-        cardScheduler.schedule(() -> {
+        long delay = TimeUnit.MINUTES.toMillis(1);
+        scheduler.schedule(() -> {
             Platform.runLater(() -> {
                 controller.decrementNotCorrectCount();
                 controller.updateLabel();
-                controller.showCardAtIndex(lastIncorrectIndex);
-                controller.userManuallySwitching = false; // Brugeren har nu skiftet kort manuelt
             });
-        }, 1, TimeUnit.MINUTES);
+        }, delay, TimeUnit.MILLISECONDS);
+
+        controller.onNextCard(new ActionEvent());
+    }
+    private void updateCardInQueue(Cards card) {
+        // Fjern kortet fra køen, hvis det allerede er der
+        cardScheduler.getCardQueue().remove(card);
+
+        // Tilføj kortet til køen igen med den opdaterede showTime
+        cardScheduler.getCardQueue().add(card);
     }
 }
